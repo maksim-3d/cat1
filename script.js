@@ -1,5 +1,5 @@
 // Конфигурация
-const API_URL = '/api/';
+const API_URL = '/api';
 const ITEMS_PER_PAGE = 10;
 const DEFAULT_REFRESH_INTERVAL = 1000; // 1 секунда
 
