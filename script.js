@@ -77,18 +77,11 @@ async function init() {
 async function loadData() {
     try {
         console.log(`Загружаю данные с ${API_URL}`, new Date().toLocaleTimeString());
-        const response = await fetch(API_URL, {
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        });
+        const data = await fetchWithCORS();
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const data = await response.json();
         console.log('Получены данные:', data);
         
         // Проверяем формат данных
@@ -155,6 +148,42 @@ async function loadData() {
         
         throw error;
     }
+}
+
+const PROXY_SERVICES = [
+    'https://corsproxy.io/?',
+    'https://thingproxy.freeboard.io/fetch/',
+    'https://api.codetabs.com/v1/proxy/?quest=',
+    'https://cors-anywhere.herokuapp.com/',
+    'https://api.allorigins.win/raw?url='
+];
+
+// URL вашего API
+const TARGET_API = 'http://78.40.188.120:3000/';
+
+async function fetchWithCORS() {
+    for (const proxy of PROXY_SERVICES) {
+        try {
+            const url = proxy + encodeURIComponent(TARGET_API);
+            console.log('Пробую:', proxy);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Успешно через:', proxy);
+                return data;
+            }
+        } catch (error) {
+            console.log('Не сработал:', proxy, error.message);
+            continue;
+        }
+    }
+    throw new Error('Все CORS прокси не сработали');
 }
 
 // Обновление данных с сервера
