@@ -6,163 +6,98 @@
     <title>Статистика котов</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1><i class="fas fa-paw"></i> Статистика котов</h1>
-            <p class="subtitle">Данные загружаются с сервера каждую секунду. Автообновление: <span id="autoRefreshStatus" class="status-active">Включено</span></p>
+        <header class="header">
+            <h1><i class="fas fa-cat"></i> Статистика котов</h1>
+            <div class="update-info">
+                <i class="fas fa-sync-alt"></i>
+                <span>Данные обновляются каждую секунду</span>
+                <div class="last-update" id="lastUpdate">Загрузка...</div>
+            </div>
         </header>
 
-        <div class="dashboard">
-            <div class="stats-bar">
-                <div class="stat-card">
-                    <h3 id="total-cats">0</h3>
-                    <p>Всего котов</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="total-attacks">0</h3>
-                    <p>Всего атак</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="avg-success">0%</h3>
-                    <p>Средний успех атак</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="total-matroskin">0</h3>
-                    <p>Всего матроскинов</p>
-                </div>
-            </div>
-
-            <div class="charts-container">
-                <div class="chart-card">
-                    <h3><i class="fas fa-chart-pie"></i> Распределение престижей</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="prestigeChart"></canvas>
+        <main class="dashboard">
+            <!-- Основные метрики -->
+            <section class="metrics-grid">
+                <div class="metric-card total-cats">
+                    <div class="metric-icon">
+                        <i class="fas fa-paw"></i>
                     </div>
-                    <div class="chart-legend" id="prestigeLegend"></div>
-                </div>
-                
-                <div class="chart-card">
-                    <h3><i class="fas fa-crown"></i> Топ по престижу</h3>
-                    <div class="top-prestige-list" id="topPrestigeList">
-                        <!-- Топ пользователей будет здесь -->
+                    <div class="metric-content">
+                        <h3>Всего котов</h3>
+                        <div class="metric-value" id="totalCats">0</div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="controls">
-            <div class="control-group">
-                <input type="text" class="search-box" id="searchInput" placeholder="Поиск по имени или никнейму...">
-                <div class="control-info">Поиск по всем полям</div>
-            </div>
-            
-            <div class="control-group">
-                <select class="sort-select" id="sortSelect">
-                    <option value="cats_desc">Коты (по убыванию)</option>
-                    <option value="cats_asc">Коты (по возрастанию)</option>
-                    <option value="success_desc">Успешные атаки (по убыванию)</option>
-                    <option value="success_asc">Успешные атаки (по возрастанию)</option>
-                    <option value="attacks_desc">Всего атак (по убыванию)</option>
-                    <option value="attacks_asc">Всего атак (по возрастанию)</option>
-                    <option value="prestige_desc">Престиж (по убыванию)</option>
-                    <option value="prestige_asc">Престиж (по возрастанию)</option>
-                    <option value="name_asc">Имя (А-Я)</option>
-                    <option value="name_desc">Имя (Я-А)</option>
-                </select>
-                <div class="control-info">Сортировка данных</div>
-            </div>
-            
-            <div class="control-group">
-                <select class="filter-select" id="filterSelect">
-                    <option value="all">Все коты</option>
-                    <option value="with_inventory">С инвентарем</option>
-                    <option value="no_inventory">Без инвентаря</option>
-                    <option value="high_prestige">Высокий престиж (3+)</option>
-                    <option value="no_prestige">Без престижа</option>
-                    <option value="many_cats">Много котов (1000+)</option>
-                    <option value="few_cats">Мало котов (< 100)</option>
-                </select>
-                <div class="control-info">Фильтрация записей</div>
-            </div>
-
-            <div class="control-group">
-                <div class="auto-refresh-control">
-                    <button id="toggleAutoRefresh" class="refresh-btn">
-                        <i class="fas fa-pause"></i> Пауза автообновления
-                    </button>
-                    <div class="control-info">Обновление каждые 1 секунду</div>
+                <div class="metric-card total-attacks">
+                    <div class="metric-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Всего атак</h3>
+                        <div class="metric-value" id="totalAttacks">0</div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Загрузка данных с сервера...</p>
-        </div>
+                <div class="metric-card success-rate">
+                    <div class="metric-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Успешных атак</h3>
+                        <div class="metric-value" id="avgSuccess">0%</div>
+                    </div>
+                </div>
 
-        <table class="cats-table" id="catsTable">
-            <thead>
-                <tr>
-                    <th data-sort="id">ID</th>
-                    <th data-sort="name">Имя</th>
-                    <th data-sort="nickname">Никнейм</th>
-                    <th data-sort="cats">Коты</th>
-                    <th data-sort="prestige_level">Престиж</th>
-                    <th data-sort="attacks">Атаки</th>
-                    <th data-sort="successful_attacks">Успешные атаки</th>
-                    <th data-sort="matroskin">Матроскин</th>
-                    <th>Инвентарь</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Данные будут загружены через JavaScript -->
-            </tbody>
-        </table>
+                <div class="metric-card matroskin">
+                    <div class="metric-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Матроскины</h3>
+                        <div class="metric-value" id="totalMatroskin">0</div>
+                    </div>
+                </div>
+            </section>
 
-        <div class="pagination" id="pagination">
-            <!-- Пагинация будет сгенерирована через JavaScript -->
-        </div>
+            <!-- Статистика престижей -->
+            <section class="prestige-section">
+                <h2><i class="fas fa-chart-line"></i> Распределение по уровням престижа</h2>
+                <div class="prestige-grid" id="prestigeStats">
+                    <!-- Динамически заполнится JavaScript -->
+                </div>
+            </section>
 
-        <div class="footer">
-            <p>Последнее обновление: <span id="updateDate">Загрузка...</span> | Всего записей: <span id="totalRecords">0</span> | Интервал: <span id="refreshInterval">1</span> сек</p>
-            <p>Сервер: http://78.40.188.120:3000/ 
-                <button id="refreshBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Обновить сейчас</button>
-                <button id="changeIntervalBtn" class="refresh-btn"><i class="fas fa-clock"></i> Изменить интервал</button>
-            </p>
-        </div>
-    </div>
+            <!-- Подробная таблица -->
+            <section class="details-section">
+                <h2><i class="fas fa-table"></i> Подробная статистика</h2>
+                <div class="table-container">
+                    <table id="catsTable">
+                        <thead>
+                            <tr>
+                                <th>Игрок</th>
+                                <th>Коты</th>
+                                <th>Атаки</th>
+                                <th>Успешные атаки</th>
+                                <th>Матроскины</th>
+                                <th>Уровень престижа</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Данные заполнятся динамически -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
 
-    <div id="intervalModal" class="modal">
-        <div class="modal-content">
-            <h3><i class="fas fa-clock"></i> Настройка интервала обновления</h3>
-            <div class="interval-options">
-                <label>
-                    <input type="radio" name="interval" value="1000" checked> 1 секунда
-                </label>
-                <label>
-                    <input type="radio" name="interval" value="3000"> 3 секунды
-                </label>
-                <label>
-                    <input type="radio" name="interval" value="5000"> 5 секунд
-                </label>
-                <label>
-                    <input type="radio" name="interval" value="10000"> 10 секунд
-                </label>
-                <label>
-                    <input type="radio" name="interval" value="30000"> 30 секунд
-                </label>
-                <label>
-                    <input type="radio" name="interval" value="60000"> 1 минута
-                </label>
-            </div>
-            <div class="modal-actions">
-                <button id="applyInterval" class="refresh-btn">Применить</button>
-                <button id="cancelInterval" class="refresh-btn cancel">Отмена</button>
-            </div>
-        </div>
+        <footer class="footer">
+            <p>Статистика обновляется в реальном времени | Всего записей: <span id="totalRecords">0</span></p>
+            <p class="server-info">Сервер работает на порту 3000</p>
+        </footer>
     </div>
 
     <script src="script.js"></script>
