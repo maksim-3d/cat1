@@ -66,8 +66,20 @@ async function init() {
         startAutoRefresh();
         updateDateElement.textContent = new Date().toLocaleString('ru-RU');
     } catch (error) {
-        showError('Ошибка при загрузке данных с сервера');
-        console.error('Error loading data:', error);
+        console.error('Error in init:', error);
+        // Проверяем, есть ли кэшированные данные
+        if (catsArray.length === 0) {
+            showError('Ошибка при загрузке данных с сервера. Проверьте подключение к интернету.');
+        } else {
+            // Используем кэшированные данные
+            console.log('Использую кэшированные данные');
+            calculateStats();
+            updatePrestigeChart();
+            updateTopPrestigeList();
+            updateTable();
+            setupEventListeners();
+            startAutoRefresh();
+        }
     } finally {
         showLoading(false);
     }
@@ -76,12 +88,11 @@ async function init() {
 // Загрузка данных с сервера
 async function loadData() {
     try {
-        console.log(`Загружаю данные с ${API_URL}`, new Date().toLocaleTimeString());
+        console.log(`Загружаю данные с API`, new Date().toLocaleTimeString());
+        
+        // Пробуем получить данные через CORS прокси
         const data = await fetchWithCORS();
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
         console.log('Получены данные:', data);
         
         // Проверяем формат данных
@@ -124,6 +135,8 @@ async function loadData() {
         // Обновляем время последнего обновления
         updateDateElement.textContent = new Date().toLocaleString('ru-RU');
         
+        return catsArray;
+        
     } catch (error) {
         console.error('Error fetching data:', error);
         
@@ -140,7 +153,7 @@ async function loadData() {
                     updateDateElement.textContent = `Кэш: ${new Date(cachedTimestamp).toLocaleString('ru-RU')}`;
                 }
                 
-                return;
+                return catsArray;
             }
         } catch (e) {
             console.warn('Ошибка при чтении из localStorage:', e);
@@ -151,11 +164,10 @@ async function loadData() {
 }
 
 const PROXY_SERVICES = [
+    'https://api.allorigins.win/raw?url=',
     'https://corsproxy.io/?',
     'https://thingproxy.freeboard.io/fetch/',
-    'https://api.codetabs.com/v1/proxy/?quest=',
-    'https://cors-anywhere.herokuapp.com/',
-    'https://api.allorigins.win/raw?url='
+    'https://api.codetabs.com/v1/proxy/?quest='
 ];
 
 // URL вашего API
@@ -165,25 +177,44 @@ async function fetchWithCORS() {
     for (const proxy of PROXY_SERVICES) {
         try {
             const url = proxy + encodeURIComponent(TARGET_API);
-            console.log('Пробую:', proxy);
+            console.log('Пробую прокси:', proxy);
             
+            // Упрощаем запрос, удаляя лишние заголовки
             const response = await fetch(url, {
                 method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache'
+                // Убираем mode и cache, так как они могут вызывать preflight
             });
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('Успешно через:', proxy);
+                console.log('Успешно через прокси:', proxy);
                 return data;
+            } else {
+                console.log(`Прокси ${proxy} вернул статус: ${response.status}`);
             }
         } catch (error) {
-            console.log('Не сработал:', proxy, error.message);
+            console.log('Не сработал прокси:', proxy, error.message);
             continue;
         }
     }
-    throw new Error('Все CORS прокси не сработали');
+    
+    // Если все прокси не сработали, пробуем напрямую
+    try {
+        console.log('Пробую прямой запрос...');
+        const response = await fetch(TARGET_API, {
+            method: 'GET',
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Успешно через прямой запрос');
+            return data;
+        }
+    } catch (directError) {
+        console.log('Прямой запрос не сработал:', directError.message);
+    }
+    
+    throw new Error('Все способы получения данных не сработали');
 }
 
 // Обновление данных с сервера
