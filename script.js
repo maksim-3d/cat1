@@ -164,10 +164,10 @@ async function loadData() {
 }
 
 const PROXY_SERVICES = [
+    'https://api.codetabs.com/v1/proxy/?quest=',
     'https://api.allorigins.win/raw?url=',
     'https://corsproxy.io/?',
-    'https://thingproxy.freeboard.io/fetch/',
-    'https://api.codetabs.com/v1/proxy/?quest='
+    'https://thingproxy.freeboard.io/fetch/'
 ];
 
 // URL вашего API
@@ -176,13 +176,19 @@ const TARGET_API = 'http://78.40.188.120:3000/';
 async function fetchWithCORS() {
     for (const proxy of PROXY_SERVICES) {
         try {
-            const url = proxy + encodeURIComponent(TARGET_API);
+            let url;
+            if (proxy === 'https://api.codetabs.com/v1/proxy/?quest=') {
+                url = proxy + TARGET_API;
+            } else {
+                url = proxy + encodeURIComponent(TARGET_API);
+            }
+            
             console.log('Пробую прокси:', proxy);
             
             // Упрощаем запрос, удаляя лишние заголовки
             const response = await fetch(url, {
                 method: 'GET',
-                // Убираем mode и cache, так как они могут вызывать preflight
+                // Не добавляем лишние заголовки
             });
             
             if (response.ok) {
@@ -198,23 +204,7 @@ async function fetchWithCORS() {
         }
     }
     
-    // Если все прокси не сработали, пробуем напрямую
-    try {
-        console.log('Пробую прямой запрос...');
-        const response = await fetch(TARGET_API, {
-            method: 'GET',
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Успешно через прямой запрос');
-            return data;
-        }
-    } catch (directError) {
-        console.log('Прямой запрос не сработал:', directError.message);
-    }
-    
-    throw new Error('Все способы получения данных не сработали');
+    throw new Error('Все CORS прокси не сработали');
 }
 
 // Обновление данных с сервера
@@ -222,15 +212,24 @@ async function refreshData() {
     if (!autoRefreshEnabled) return;
     
     try {
-        await loadData();
-        calculateStats();
-        updatePrestigeChart();
-        updateTopPrestigeList();
-        updateTable();
-        console.log('Данные обновлены:', new Date().toLocaleTimeString());
+        const newData = await loadData();
+        if (newData) {
+            catsArray = newData;
+            calculateStats();
+            updatePrestigeChart();
+            updateTopPrestigeList();
+            updateTable();
+            console.log('Данные обновлены:', new Date().toLocaleTimeString());
+        }
     } catch (error) {
         console.error('Error refreshing data:', error);
-        // Не показываем ошибку пользователю при автообновлении
+        // Используем кэшированные данные если есть
+        if (catsArray.length > 0) {
+            calculateStats();
+            updatePrestigeChart();
+            updateTopPrestigeList();
+            updateTable();
+        }
     }
 }
 
